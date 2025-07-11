@@ -739,16 +739,164 @@ src/
 
 ---
 
-## 🔜 Próximo passo:
-
-### 🗓️ Dia 5 – Criar página de listagem de tarefas
-
-Você vai:
-
-* Criar a página `TarefasPage.jsx`
-* Usar `api.get('/tarefas')` para buscar as tarefas do usuário logado
-* Exibir as tarefas com título e status
+Perfeito! Vamos criar **o Dia 5 da sua aula**, com **todos os detalhes** para você que está começando agora.
 
 ---
 
-🎓 **Deseja que eu crie a aula do Dia 5 agora com todos os detalhes?**
+# 🗓️ Dia 5 – Listar tarefas do usuário logado
+
+## 🎯 Objetivo:
+
+* Criar uma página chamada `/tarefas`
+* Fazer uma requisição **GET /tarefas** com o token salvo no login
+* Mostrar as tarefas do usuário logado (título, status)
+* Adicionar um botão para excluir cada tarefa
+
+---
+
+## ✅ 1. Crie o arquivo da página
+
+📁 Crie um novo arquivo:
+
+```bash
+src/pages/TarefasPage.jsx
+```
+
+---
+
+## ✅ 2. Escreva o código da página
+
+```jsx
+// src/pages/TarefasPage.jsx
+import React, { useEffect, useState } from 'react';
+import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
+
+export default function TarefasPage() {
+  const [tarefas, setTarefas] = useState([]);
+  const navigate = useNavigate();
+
+  // 🔁 Carrega as tarefas quando a página é aberta
+  useEffect(() => {
+    async function carregarTarefas() {
+      try {
+        const resposta = await api.get('/tarefas'); // token já é enviado via interceptor
+        setTarefas(resposta.data);
+      } catch (error) {
+        alert('Erro ao buscar tarefas. Verifique seu login.');
+        navigate('/login');
+      }
+    }
+
+    carregarTarefas();
+  }, [navigate]);
+
+  // 🗑️ Excluir tarefa
+  async function excluirTarefa(id) {
+    try {
+      await api.delete(`/tarefas/${id}`);
+      setTarefas((tarefas) => tarefas.filter((tarefa) => tarefa.id !== id));
+    } catch (error) {
+      alert('Erro ao excluir tarefa.');
+    }
+  }
+
+  return (
+    <div>
+      <h2>Minhas Tarefas</h2>
+      {tarefas.length === 0 && <p>Nenhuma tarefa encontrada.</p>}
+      <ul>
+        {tarefas.map((tarefa) => (
+          <li key={tarefa.id}>
+            <strong>{tarefa.titulo}</strong> - {tarefa.status}
+            <button onClick={() => excluirTarefa(tarefa.id)} style={{ marginLeft: '10px' }}>
+              Excluir
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+---
+
+## ✅ 3. Adicione a rota no `App.js`
+
+Se ainda não tiver, abra o arquivo:
+
+```jsx
+// src/App.js
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import TarefasPage from './pages/TarefasPage';
+import NovaTarefaPage from './pages/NovaTarefaPage'; // se tiver
+import LoginPage from './pages/LoginPage'; // se tiver
+import RegistroPage from './pages/RegistroPage'; // se tiver
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/registrar" element={<RegistroPage />} />
+        <Route path="/tarefas" element={<TarefasPage />} />
+        <Route path="/nova-tarefa" element={<NovaTarefaPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+```
+
+---
+
+## ✅ 4. Verifique o token com `api.js`
+
+⚠️ **Esse passo é essencial!** Certifique-se de que `services/api.js` está configurado assim:
+
+```js
+// src/services/api.js
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:3000',
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
+```
+
+---
+
+## ✅ 5. Teste no navegador
+
+1. Acesse `/login`, entre com seu usuário.
+2. Você será redirecionado para `/tarefas`.
+3. Se tudo estiver correto, verá suas tarefas listadas.
+4. Teste o botão **Excluir**, ele deve remover a tarefa da API e da tela.
+
+---
+
+## 🧠 O que você aprendeu hoje?
+
+✔️ Como listar tarefas do usuário autenticado
+✔️ Como proteger a requisição com o token
+✔️ Como excluir uma tarefa pelo botão
+✔️ Como manipular estado com `useState` e `useEffect`
+
+---
+
+## 💡 Próximo passo sugerido:
+
+**🗓️ Dia 6 – Criar formulário de nova tarefa (POST /tarefas)**
+Quer que eu crie o conteúdo detalhado do Dia 6 agora?
+
