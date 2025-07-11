@@ -900,3 +900,312 @@ export default api;
 **🗓️ Dia 6 – Criar formulário de nova tarefa (POST /tarefas)**
 Quer que eu crie o conteúdo detalhado do Dia 6 agora?
 
+---
+
+# 📘 Semana 2: CRUD completo de tarefas + filtros
+
+Ótimo! Vamos dar continuidade ao projeto criando a funcionalidade de **cadastrar novas tarefas** usando o **formulário** e a **requisição POST /tarefas** da sua API.
+
+---
+
+# 🗓️ Dia 6 – Criar Tarefa (`POST /tarefas`)
+
+### 🎯 Objetivo:
+
+* Criar um formulário com `título` e `descrição`.
+* Enviar os dados para a API.
+* Redirecionar o usuário para a lista de tarefas após o cadastro.
+
+---
+
+## 📁 Estrutura esperada:
+
+Você deve ter algo como:
+
+```
+/src
+  /pages
+    - Login.js
+    - Registro.js
+    - Tarefas.js
+    ✅ NovaTarefa.js  ← criamos aqui
+```
+
+---
+
+## ✅ Passo 1 – Criar arquivo `NovaTarefa.jsx`
+
+Crie a página em `/src/pages/NovaTarefa.jsx`:
+
+```jsx
+// src/pages/NovaTarefaPage.jsx
+import React, { useState } from 'react';
+import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
+
+export default function NovaTarefaPage() {
+  const [titulo, setTitulo] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const navigate = useNavigate();
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    try {
+      await api.post('/tarefas', { titulo, descricao });
+      alert('Tarefa criada com sucesso!');
+      navigate('/tarefas');
+    } catch (error) {
+      alert('Erro ao criar tarefa');
+    }
+  }
+
+  return (
+    <div>
+      <h2>Criar Nova Tarefa</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Título"
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+        />
+        <br />
+        <textarea
+          placeholder="Descrição"
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+        ></textarea>
+        <br />
+        <button type="submit">Salvar</button>
+      </form>
+    </div>
+  );
+}
+```
+
+---
+
+## ✅ Passo 2 – Adicionar essa rota no `App.js`
+
+No arquivo `src/App.js`:
+
+```jsx
+import NovaTarefa from './pages/NovaTarefa';
+
+// ...
+<Route path="/nova-tarefa" element={<NovaTarefa />} />
+```
+
+---
+
+## ✅ Passo 3 – Adicionar botão de “Nova Tarefa” na listagem
+
+No final do arquivo `Tarefas.js`, adicione:
+
+```jsx
+import { Link } from 'react-router-dom';
+
+<Link to="/nova-tarefa">
+  <button style={{ marginTop: '20px' }}>Nova Tarefa</button>
+</Link>
+```
+
+---
+
+## ✅ Teste
+
+1. Faça login normalmente.
+2. Vá até `/nova-tarefa` (ou clique no botão "Nova Tarefa").
+3. Preencha o formulário e clique em **Criar**.
+4. Você será redirecionado para `/tarefas` e a nova tarefa deve aparecer lá.
+
+---
+
+## 🧠 O que você aprendeu hoje:
+
+* Como criar um formulário em React.
+* Como usar o `useNavigate()` para redirecionar.
+* Como fazer uma requisição `POST` com **axios** para a API.
+* Como proteger rotas usando `Bearer Token` com o `axiosInstance`.
+
+---
+
+Claro! Vamos construir o **Dia 7** da sua jornada com **React.js + API NestJS**, focando em **excluir tarefas**.
+
+---
+
+# 🗓️ **Dia 7 – Excluir tarefa (DELETE /tarefas/\:id)**
+
+## 🎯 **Objetivo da aula**
+
+* Adicionar um botão "Excluir" ao lado de cada tarefa.
+* Quando clicado, a tarefa será removida do banco de dados via requisição DELETE.
+* A lista será atualizada automaticamente após a exclusão.
+
+---
+
+## 📁 1. Arquivo que vamos editar:
+
+* `src/pages/TarefasPage.jsx` (ou `Tarefas.jsx`, conforme sua organização)
+* Esse é o componente que lista as tarefas.
+
+---
+
+## ✅ 2. Antes de começar
+
+Verifique se a listagem já está funcionando e se você já tem o `token` armazenado no `localStorage` e o `axios` configurado em `services/api.js`.
+
+---
+
+## 🧠 3. O que é DELETE /tarefas/\:id?
+
+Na API do NestJS, temos essa rota configurada para deletar tarefas:
+
+```
+DELETE http://localhost:3000/tarefas/:id
+```
+
+Precisamos mandar uma requisição DELETE passando o `id` da tarefa no final da URL.
+
+---
+
+## ✍️ 4. Editando `TarefasPage.jsx`
+
+Vamos adicionar a função `excluirTarefa` dentro do componente:
+
+```jsx
+// src/pages/TarefasPage.jsx
+import React, { useEffect, useState } from "react";
+import api from "../services/api";
+import { Link, useNavigate } from "react-router-dom";
+
+export default function TarefasPage() {
+   const [tarefas, setTarefas] = useState([]);
+   const navigate = useNavigate();
+
+   // 🔁 Carrega as tarefas quando a página é aberta
+   useEffect(() => {
+      async function carregarTarefas() {
+         try {
+            const resposta = await api.get("/tarefas"); // token já é enviado via interceptor
+            setTarefas(resposta.data);
+         } catch (error) {
+            alert("Erro ao buscar tarefas. Verifique seu login.");
+            navigate("/login");
+         }
+      }
+
+      carregarTarefas();
+   }, [navigate]);
+
+   // 🗑️ Excluir tarefa
+   async function excluirTarefa(id) {
+      const confirmar = window.confirm("Deseja realmente excluir esta tarefa?");
+      if (!confirmar) return;
+
+      try {
+         await api.delete(`/tarefas/${id}`);
+         setTarefas((tarefas) => tarefas.filter((tarefa) => tarefa.id !== id));
+      } catch (error) {
+         alert("Erro ao excluir tarefa.");
+      }
+   }
+
+   return (
+      <div>
+         <h2>Minhas Tarefas</h2>
+
+         <Link to="/nova-tarefa">
+            <button style={{ marginTop: "20px" }}>Nova Tarefa</button>
+         </Link>
+
+         {tarefas.length === 0 && <p>Nenhuma tarefa encontrada.</p>}
+         <ul>
+            {tarefas.map((tarefa) => (
+               <li
+                  key={tarefa.id}
+                  style={{ marginBottom: "16px", listStyle: "none" }}
+               >
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                     <strong>{tarefa.titulo}</strong>
+                     <span>Descrição: {tarefa.descricao}</span>
+                     <span>Status: {tarefa.status}</span>
+
+                     {/* 🔴 Botão de excluir */}
+                     <button
+                        onClick={() => excluirTarefa(tarefa.id)}
+                        style={{
+                           marginTop: "8px",
+                           padding: "6px 12px",
+                           backgroundColor: "#e74c3c",
+                           color: "#fff",
+                           border: "none",
+                           borderRadius: "4px",
+                           width: "100px",
+                           cursor: "pointer",
+                        }}
+                     >
+                        Excluir
+                     </button>
+                  </div>
+               </li>
+            ))}
+         </ul>
+      </div>
+   );
+}
+```
+
+---
+
+## 💡 Explicação:
+
+* `excluirTarefa(id)`: chama a API DELETE com o id da tarefa.
+* `window.confirm(...)`: pergunta ao usuário se ele realmente quer excluir.
+* `carregarTarefas()`: recarrega a lista após excluir.
+
+---
+
+## 🧪 5. Teste no Navegador
+
+1. Vá para a página `/tarefas`.
+2. Clique no botão "Excluir" ao lado de alguma tarefa.
+3. Veja se ela **some da lista**.
+4. Atualize a página. A tarefa **não deve voltar** (foi excluída do banco de dados).
+
+---
+
+## 📝 Desafio Extra (opcional para treino):
+
+Adicione um **ícone de lixeira** no botão de excluir usando um emoji ou biblioteca como `react-icons`:
+
+```bash
+npm install react-icons
+```
+
+E no botão:
+
+```jsx
+import { FaTrash } from 'react-icons/fa';
+
+<button onClick={() => excluirTarefa(tarefa.id)}>
+  <FaTrash /> Excluir
+</button>
+```
+
+---
+
+## ✅ Resumo da Aula:
+
+* Aprendeu a usar o método `DELETE` da API com `axios`.
+* Conectou o botão de excluir à função `excluirTarefa`.
+* Atualizou a lista após exclusão com `setTarefas`.
+
+---
+
+## 👉 Próximo passo:
+
+**Dia 8 – Atualizar status da tarefa (PATCH /tarefas/\:id/status)**
+
+> Deseja que eu já prepare a aula do Dia 8 agora?
+

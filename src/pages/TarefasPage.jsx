@@ -1,7 +1,7 @@
 // src/pages/TarefasPage.jsx
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function TarefasPage() {
    const [tarefas, setTarefas] = useState([]);
@@ -24,6 +24,9 @@ export default function TarefasPage() {
 
    // 🗑️ Excluir tarefa
    async function excluirTarefa(id) {
+      const confirmar = window.confirm("Deseja realmente excluir esta tarefa?");
+      if (!confirmar) return;
+
       try {
          await api.delete(`/tarefas/${id}`);
          setTarefas((tarefas) => tarefas.filter((tarefa) => tarefa.id !== id));
@@ -35,6 +38,11 @@ export default function TarefasPage() {
    return (
       <div>
          <h2>Minhas Tarefas</h2>
+
+         <Link to="/nova-tarefa">
+            <button style={{ marginTop: "20px" }}>Nova Tarefa</button>
+         </Link>
+
          {tarefas.length === 0 && <p>Nenhuma tarefa encontrada.</p>}
          <ul>
             {tarefas.map((tarefa) => (
@@ -47,6 +55,7 @@ export default function TarefasPage() {
                      <span>Descrição: {tarefa.descricao}</span>
                      <span>Status: {tarefa.status}</span>
 
+                     {/* 🔴 Botão de excluir */}
                      <button
                         onClick={() => excluirTarefa(tarefa.id)}
                         style={{
