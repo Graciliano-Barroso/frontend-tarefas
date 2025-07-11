@@ -73,6 +73,7 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 # 📘 Semana 1: Base com React.js + Comunicação com a API
 
 # 🗓️ Dia 1 – Criando o projeto React + estrutura base
+
 Instalar Node, npm, e criar o projeto com create-react-app.
 
 Vamos começar o Dia 1 – Criando o projeto React + estrutura base com todos os detalhes para quem está começando do zero. Aqui você vai:
@@ -247,3 +248,366 @@ Você pode navegar manualmente para ``/registro``, ``/tarefas``, ``/tarefas/nova
 ✔️ Criou páginas base
 ✔️ Configurou rotas com React Router
 
+# **🗓️ Dia 2 – Criar página de Registro e fazer POST**.
+
+Neste dia, você aprenderá:
+
+### 🎯 Objetivos:
+
+* Criar um **formulário de cadastro** (nome, e-mail, senha)
+* Fazer uma **requisição POST** para sua API NestJS
+* Exibir mensagens de **sucesso ou erro** ao usuário
+
+---
+
+## ✅ Etapa 1: Abrir a página RegisterPage.jsx
+
+Abra o arquivo:
+
+```bash
+src/pages/RegisterPage.jsx
+```
+
+E substitua **tudo** pelo seguinte código:
+
+```jsx
+import { useState } from "react";
+import axios from "axios";
+
+function RegisterPage() {
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [mensagem, setMensagem] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await axios.post("http://localhost:3000/usuarios/registrar", {
+        nome,
+        email,
+        senha,
+      });
+
+      setMensagem("✅ Usuário registrado com sucesso!");
+      setNome("");
+      setEmail("");
+      setSenha("");
+    } catch (error) {
+      if (error.response) {
+        setMensagem(`❌ Erro: ${error.response.data.message}`);
+      } else {
+        setMensagem("❌ Erro ao conectar com o servidor");
+      }
+    }
+  };
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h2>Registro de Usuário</h2>
+
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Nome:</label><br />
+          <input
+            type="text"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Email:</label><br />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Senha:</label><br />
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
+        </div>
+
+        <button type="submit" style={{ marginTop: "10px" }}>Registrar</button>
+      </form>
+
+      {mensagem && (
+        <div style={{ marginTop: "10px", color: "green" }}>{mensagem}</div>
+      )}
+    </div>
+  );
+}
+
+export default RegisterPage;
+```
+
+---
+
+## ✅ Etapa 2: Garantir que a API NestJS está funcionando
+
+Sua API deve estar **rodando** no `localhost:3000`.
+
+No seu NestJS, a rota de registro de usuário deve estar assim:
+
+```ts
+// POST /usuarios/registrar
+@Post('registrar')
+registrar(@Body() dto: CreateUsuarioDto) {
+  return this.usuarioService.registrar(dto.nome, dto.email, dto.senha);
+}
+```
+
+Verifique também que o CORS está habilitado no `main.ts` da API:
+
+```ts
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.enableCors(); // Permite que o frontend se comunique com a API
+  await app.listen(3000);
+}
+```
+
+---
+
+## ✅ Etapa 3: Testar no navegador
+
+1. Inicie o React:
+
+```bash
+npm start
+```
+
+2. Vá até:
+
+```
+http://localhost:3000/registro
+```
+
+3. Preencha o formulário com:
+
+* Nome
+* E-mail válido
+* Senha
+
+4. Clique em **Registrar**
+
+5. Você verá uma mensagem ✅ ou ❌ dependendo do resultado.
+
+---
+
+## ✅ Etapa 4: Visualizando os dados
+
+Se o registro for bem-sucedido, você pode ver o novo usuário salvo:
+
+* No **PostgreSQL**:
+
+```sql
+SELECT * FROM usuario_entity;
+```
+
+---
+
+## ✅ Resumo do Dia 2:
+
+✔️ Criou formulário de registro no React
+✔️ Enviou dados para a API NestJS com `axios`
+✔️ Exibiu mensagens de sucesso ou erro
+✔️ Garantiu que o CORS estava habilitado
+
+---
+
+# **🗓️ Dia 3 – Criar página de Login e salvar o token JWT**.
+
+---
+
+## 🎯 Objetivo do Dia:
+
+* Criar um **formulário de login**.
+* Enviar o e-mail e a senha para a API NestJS usando `axios`.
+* Armazenar o token JWT retornado no `localStorage`.
+* Redirecionar o usuário para a página de tarefas ao fazer login com sucesso.
+
+---
+
+## ✅ Etapa 1: Criar a página de login
+
+Crie o arquivo:
+
+```
+src/pages/LoginPage.jsx
+```
+
+E cole o seguinte conteúdo:
+
+```jsx
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [mensagem, setMensagem] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      const resposta = await axios.post("http://localhost:3000/auth/login", {
+        email,
+        senha,
+      });
+
+      const token = resposta.data.access_token;
+      localStorage.setItem("token", token); // Salva o token no navegador
+
+      setMensagem("✅ Login realizado com sucesso!");
+      navigate("/tarefas"); // redireciona para a página de tarefas
+    } catch (erro) {
+      if (erro.response) {
+        setMensagem(`❌ Erro: ${erro.response.data.message}`);
+      } else {
+        setMensagem("❌ Erro ao conectar com o servidor");
+      }
+    }
+  };
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h2>Login</h2>
+
+      <form onSubmit={handleLogin}>
+        <div>
+          <label>Email:</label><br />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Senha:</label><br />
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
+        </div>
+
+        <button type="submit" style={{ marginTop: "10px" }}>Entrar</button>
+      </form>
+
+      {mensagem && <p style={{ marginTop: "10px", color: "green" }}>{mensagem}</p>}
+    </div>
+  );
+}
+
+export default LoginPage;
+```
+
+---
+
+## ✅ Etapa 2: Adicionar rota de login no React Router
+
+Abra o arquivo:
+
+```
+src/App.jsx
+```
+
+E atualize com a nova rota:
+
+```jsx
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
+import TarefasPage from "./pages/TarefasPage"; // (você vai criar essa depois)
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/registro" element={<RegisterPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/tarefas" element={<TarefasPage />} /> {/* você vai criar depois */}
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+```
+
+---
+
+## ✅ Etapa 3: Testar no navegador
+
+1. Rode a API NestJS (`npm run start:dev`)
+2. Rode o frontend React (`npm start`)
+3. Acesse:
+
+```
+http://localhost:3000/login
+```
+
+4. Preencha o e-mail e a senha de um usuário já registrado
+5. Clique em **Entrar**
+6. Verifique no DevTools → Application → LocalStorage → aparece o `token`
+
+---
+
+## ✅ Etapa 4: Verificando o token
+
+Você verá algo assim no navegador (F12 > Application > LocalStorage):
+
+```
+Key: token
+Value: eyJhbGciOiJIUzI1NiIsInR...
+```
+
+Esse token é o que será enviado nas requisições protegidas (como criar/listar tarefas).
+
+---
+
+## 🔁 Próximo passo
+
+Crie uma nova página chamada `TarefasPage.jsx` onde você:
+
+* Pega o token do `localStorage`
+* Faz uma requisição para a API usando esse token
+* Mostra as tarefas do usuário logado
+
+---
+
+## ✅ Resumo do Dia 3:
+
+✔️ Criou página de login com formulário
+✔️ Fez `POST /auth/login` com e-mail/senha
+✔️ Armazenou o token no `localStorage`
+✔️ Redirecionou para a rota `/tarefas` com `useNavigate`
+
+---
+
+### 🔜 Dia 4 – Listar tarefas do usuário logado
+
+Você vai:
+
+* Criar a página `/tarefas`
+* Usar o token para fazer `GET /tarefas`
+* Exibir lista de tarefas do usuário
+
+Quer que eu prepare a aula do **Dia 4** agora?
