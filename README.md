@@ -602,12 +602,153 @@ Crie uma nova página chamada `TarefasPage.jsx` onde você:
 
 ---
 
-### 🔜 Dia 4 – Listar tarefas do usuário logado
+# **🗓️ Dia 4 – Criar serviço Axios com autenticação**
+
+Hoje você vai aprender a **centralizar todas as requisições HTTP usando o `axios`**, de forma que o **token JWT seja automaticamente enviado** sempre que o usuário estiver logado.
+
+---
+
+## 🎯 Objetivo do Dia:
+
+* Criar um **arquivo único** para configurar o `axios`.
+* Fazer com que esse `axios` envie **automaticamente o token JWT** em todas as requisições.
+* Evitar ter que ficar copiando `headers` manualmente toda vez.
+
+---
+
+## ✅ Etapa 1: Criar pasta `services` e o arquivo `api.js`
+
+📁 Crie a pasta:
+
+```
+src/services/
+```
+
+📄 Dentro dela, crie o arquivo:
+
+```
+src/services/api.js
+```
+
+✏️ E adicione este conteúdo:
+
+```javascript
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:3000', // sua API NestJS
+});
+
+// Intercepta todas as requisições antes de serem enviadas
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token'); // pega o token salvo
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`; // adiciona nos headers
+  }
+  return config;
+});
+
+export default api;
+```
+
+---
+
+## 🧠 O que esse código faz?
+
+* `axios.create(...)`: cria uma versão personalizada do axios com a URL base da sua API.
+* `.interceptors.request.use(...)`: adiciona um *interceptor* que roda antes de **cada requisição**.
+* Ele pega o `token` do `localStorage` e adiciona automaticamente no header `Authorization`.
+
+---
+
+## ✅ Etapa 2: Usar o `api` no lugar do `axios`
+
+Agora que temos o `api` configurado, **substituímos o uso direto do `axios` por ele**.
+
+### Exemplo no `LoginPage.jsx`
+
+Antes (usando axios diretamente):
+
+```javascript
+const resposta = await axios.post("http://localhost:3000/auth/login", {
+  email,
+  senha,
+});
+```
+
+Depois (ainda pode usar axios aqui **somente pro login**, pois ainda não tem o token):
+
+✅ Pode manter esse trecho como está para o login, **mas para todas as outras requisições protegidas**, como listar ou criar tarefas, você **deve usar** o `api`.
+
+---
+
+## ✅ Etapa 3: Testar o funcionamento
+
+Para testar se o interceptor está funcionando:
+
+1. Acesse `/login` e faça login.
+2. Abra o DevTools > Network.
+3. Faça uma requisição (ex: acessar `/tarefas`).
+4. Verifique se nos headers da requisição está aparecendo:
+
+```http
+Authorization: Bearer SEU_TOKEN_JWT
+```
+
+---
+
+## ✅ Etapa 4: Usar o `api` nas páginas que acessam rotas protegidas
+
+Agora, sempre que você for criar, editar, deletar ou listar tarefas, use o `api` que criamos:
+
+```javascript
+import api from '../services/api';
+
+// Exemplo: pegar todas as tarefas
+const resposta = await api.get('/tarefas');
+
+// Exemplo: criar uma nova tarefa
+await api.post('/tarefas', {
+  titulo: "Nova Tarefa",
+  descricao: "Estudar React",
+});
+```
+
+---
+
+## 🛠️ Organização da pasta até agora
+
+```
+src/
+├── services/
+│   └── api.js ✅
+├── pages/
+│   ├── LoginPage.jsx
+│   ├── RegisterPage.jsx
+│   └── TarefasPage.jsx (você vai criar no próximo dia)
+├── App.jsx
+```
+
+---
+
+## ✅ Resumo do Dia 4
+
+✔️ Criou um serviço `api.js` com `axios.create()`
+✔️ Configurou o envio automático do token JWT com `interceptors`
+✔️ Aprendeu a usar esse `api` nas rotas protegidas da API
+
+---
+
+## 🔜 Próximo passo:
+
+### 🗓️ Dia 5 – Criar página de listagem de tarefas
 
 Você vai:
 
-* Criar a página `/tarefas`
-* Usar o token para fazer `GET /tarefas`
-* Exibir lista de tarefas do usuário
+* Criar a página `TarefasPage.jsx`
+* Usar `api.get('/tarefas')` para buscar as tarefas do usuário logado
+* Exibir as tarefas com título e status
 
-Quer que eu prepare a aula do **Dia 4** agora?
+---
+
+🎓 **Deseja que eu crie a aula do Dia 5 agora com todos os detalhes?**
