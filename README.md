@@ -1061,7 +1061,7 @@ Verifique se a listagem já está funcionando e se você já tem o `token` armaz
 
 Na API do NestJS, temos essa rota configurada para deletar tarefas:
 
-```
+```bash
 DELETE http://localhost:3000/tarefas/:id
 ```
 
@@ -1208,4 +1208,585 @@ import { FaTrash } from 'react-icons/fa';
 **Dia 8 – Atualizar status da tarefa (PATCH /tarefas/\:id/status)**
 
 > Deseja que eu já prepare a aula do Dia 8 agora?
+
+---
+
+# **🗓️ Dia 8 – Atualizar status (PATCH /tarefas/\:id/status)**
+
+---
+
+## 🎯 **Objetivo da Aula**
+
+Aprender a:
+
+* Mostrar um botão ou um campo `select` com os status possíveis.
+* Enviar uma requisição `PATCH` para atualizar o status da tarefa no backend.
+* Atualizar a lista após a mudança.
+
+---
+
+## 📘 **Pré-requisitos**
+
+* A API `/tarefas/:id/status` já está pronta no backend (com autenticação JWT).
+* Você já está exibindo a lista de tarefas no `TarefasPage.jsx`.
+
+---
+
+## ✅ 1. Adicionar um `<select>` com os status em cada tarefa
+
+Vamos abrir seu arquivo `TarefasPage.jsx` e **modificar o `map` que exibe cada tarefa**.
+
+### 🔁 Antes:
+
+```jsx
+<span>Status: {tarefa.status}</span>
+```
+
+### ✅ Depois:
+
+Substitua esse trecho por:
+
+```jsx
+<label>
+  Status:
+  <select
+    value={tarefa.status}
+    onChange={(e) => atualizarStatus(tarefa.id, e.target.value)}
+  >
+    <option value="ABERTA">Aberta</option>
+    <option value="EM_ANDAMENTO">Em andamento</option>
+    <option value="CONCLUIDA">Concluída</option>
+  </select>
+</label>
+```
+
+---
+
+## ✅ 2. Criar a função `atualizarStatus`
+
+**Logo abaixo da função `excluirTarefa`, crie:**
+
+```jsx
+async function atualizarStatus(id, novoStatus) {
+  try {
+    await api.patch(`/tarefas/${id}/status`, {
+      status: novoStatus,
+    });
+
+    // Atualiza a lista de tarefas localmente
+    setTarefas((tarefas) =>
+      tarefas.map((t) =>
+        t.id === id ? { ...t, status: novoStatus } : t
+      )
+    );
+  } catch (error) {
+    alert('Erro ao atualizar status da tarefa');
+  }
+}
+```
+
+---
+
+## ✅ 3. Código completo atualizado do `TarefasPage.jsx`
+
+```jsx
+// src/pages/TarefasPage.jsx
+import React, { useEffect, useState } from "react";
+import api from "../services/api";
+import { Link, useNavigate } from "react-router-dom";
+
+export default function TarefasPage() {
+   const [tarefas, setTarefas] = useState([]);
+   const navigate = useNavigate();
+
+   // 🔁 Carrega as tarefas quando a página é aberta
+   useEffect(() => {
+      async function carregarTarefas() {
+         try {
+            const resposta = await api.get("/tarefas"); // token já é enviado via interceptor
+            setTarefas(resposta.data);
+         } catch (error) {
+            alert("Erro ao buscar tarefas. Verifique seu login.");
+            navigate("/login");
+         }
+      }
+
+      carregarTarefas();
+   }, [navigate]);
+
+   // 🗑️ Excluir tarefa
+   async function excluirTarefa(id) {
+      const confirmar = window.confirm("Deseja realmente excluir esta tarefa?");
+      if (!confirmar) return;
+
+      try {
+         await api.delete(`/tarefas/${id}`);
+         setTarefas((tarefas) => tarefas.filter((tarefa) => tarefa.id !== id));
+      } catch (error) {
+         alert("Erro ao excluir tarefa.");
+      }
+   }
+
+   async function atualizarStatus(id, novoStatus) {
+      try {
+         await api.patch(`/tarefas/${id}/status`, {
+            status: novoStatus,
+         });
+
+         // Atualiza a lista de tarefas localmente
+         setTarefas((tarefas) =>
+            tarefas.map((t) => (t.id === id ? { ...t, status: novoStatus } : t))
+         );
+      } catch (error) {
+         alert("Erro ao atualizar status da tarefa");
+      }
+   }
+
+   return (
+      <div>
+         <h2>Minhas Tarefas</h2>
+
+         <Link to="/nova-tarefa">
+            <button style={{ marginTop: "20px" }}>Nova Tarefa</button>
+         </Link>
+
+         {tarefas.length === 0 && <p>Nenhuma tarefa encontrada.</p>}
+         <ul>
+            {tarefas.map((tarefa) => (
+               <li
+                  key={tarefa.id}
+                  style={{ marginBottom: "16px", listStyle: "none" }}
+               >
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                     <strong>{tarefa.titulo}</strong>
+                     <span>Descrição: {tarefa.descricao}</span>
+                     <label>
+                        Status:
+                        <select
+                           value={tarefa.status}
+                           onChange={(e) =>
+                              atualizarStatus(tarefa.id, e.target.value)
+                           }
+                        >
+                           <option value="ABERTA">Aberta</option>
+                           <option value="EM_ANDAMENTO">Em andamento</option>
+                           <option value="FINALIZADA">Concluída</option>
+                        </select>
+                     </label>
+
+                     {/* 🔴 Botão de excluir */}
+                     <button
+                        onClick={() => excluirTarefa(tarefa.id)}
+                        style={{
+                           marginTop: "8px",
+                           padding: "6px 12px",
+                           backgroundColor: "#e74c3c",
+                           color: "#fff",
+                           border: "none",
+                           borderRadius: "4px",
+                           width: "100px",
+                           cursor: "pointer",
+                        }}
+                     >
+                        Excluir
+                     </button>
+                  </div>
+               </li>
+            ))}
+         </ul>
+      </div>
+   );
+}
+```
+
+---
+
+## ✅ Testar
+
+1. Faça login normalmente.
+2. Vá para `/tarefas`.
+3. Altere o status de alguma tarefa.
+4. Atualize a página e verifique se continua com o novo status.
+
+---
+
+## 🧠 Dica de aprendizado
+
+* `PATCH` é usado para **atualizar parcialmente** uma informação (neste caso, só o `status`).
+* O `select` atualiza o status da tarefa **imediatamente**, sem precisar novo botão.
+
+---
+
+# **🗓️ Dia 9 – Filtro por status e busca**
+
+---
+
+## 🎯 Objetivo da aula
+
+Criar uma barra de **busca** e um **filtro por status** na página de tarefas para filtrar os resultados de acordo com o que o usuário digitar.
+
+---
+
+## 📚 O que você vai aprender
+
+* Usar **query params** com Axios (`/tarefas?status=ABERTA&busca=react`)
+* Criar inputs controlados em React
+* Atualizar a lista de tarefas com base nos filtros
+
+---
+
+## 🛠️ Pré-requisitos
+
+* Sua API já aceita `/tarefas?status=...&busca=...`
+* O token JWT já está sendo enviado via interceptor
+* Sua página de tarefas já lista as tarefas corretamente (`TarefasPage.jsx`)
+
+---
+
+## 🧱 Passo a passo da implementação
+
+### 1. ✏️ Atualize a página `TarefasPage.jsx`
+
+Vamos adicionar **dois filtros**:
+
+* Um campo de texto para buscar por título ou descrição.
+* Um `select` para filtrar por status.
+
+### 🧩 Código completo atualizado
+
+```jsx
+// src/pages/TarefasPage.jsx
+import React, { useEffect, useState } from "react";
+import api from "../services/api";
+import { Link, useNavigate } from "react-router-dom";
+
+export default function TarefasPage() {
+   const [tarefas, setTarefas] = useState([]);
+   const [status, setStatus] = useState(""); // novo: filtro por status
+   const [busca, setBusca] = useState(""); // novo: busca por texto
+   const navigate = useNavigate();
+
+   // 🔁 Carrega as tarefas quando a página é aberta
+   useEffect(() => {
+      async function carregarTarefas() {
+         try {
+            const resposta = await api.get("/tarefas", {
+               params: {
+                  status: status || undefined,
+                  busca: busca || undefined,
+               },
+            }); // token já é enviado via interceptor
+            setTarefas(resposta.data);
+         } catch (error) {
+            alert("Erro ao buscar tarefas. Verifique seu login.");
+            navigate("/login");
+         }
+      }
+
+      carregarTarefas();
+   }, [navigate, status, busca]);
+
+   // 🗑️ Excluir tarefa
+   async function excluirTarefa(id) {
+      const confirmar = window.confirm("Deseja realmente excluir esta tarefa?");
+      if (!confirmar) return;
+
+      try {
+         await api.delete(`/tarefas/${id}`);
+         setTarefas((tarefas) => tarefas.filter((tarefa) => tarefa.id !== id));
+      } catch (error) {
+         alert("Erro ao excluir tarefa.");
+      }
+   }
+
+   async function atualizarStatus(id, novoStatus) {
+      try {
+         await api.patch(`/tarefas/${id}/status`, {
+            status: novoStatus,
+         });
+
+         // Atualiza a lista de tarefas localmente
+         setTarefas((tarefas) =>
+            tarefas.map((t) => (t.id === id ? { ...t, status: novoStatus } : t))
+         );
+      } catch (error) {
+         alert("Erro ao atualizar status da tarefa");
+      }
+   }
+
+   return (
+      <div>
+         <h2>Minhas Tarefas</h2>
+         {/* 🔎 Campo de busca */}
+         <input
+            type="text"
+            placeholder="Buscar por título ou descrição"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            style={{ marginRight: "10px" }}
+         />
+
+         {/* 🔘 Filtro por status */}
+         <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">Todos</option>
+            <option value="ABERTA">Aberta</option>
+            <option value="EM_ANDAMENTO">Em andamento</option>
+            <option value="FINALIZADA">Concluída</option>
+         </select>
+
+         <Link to="/nova-tarefa">
+            <button style={{ marginTop: "20px" }}>Nova Tarefa</button>
+         </Link>
+
+         {tarefas.length === 0 && <p>Nenhuma tarefa encontrada.</p>}
+         <ul>
+            {tarefas.map((tarefa) => (
+               <li
+                  key={tarefa.id}
+                  style={{ marginBottom: "16px", listStyle: "none" }}
+               >
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                     <strong>{tarefa.titulo}</strong>
+                     <span>Descrição: {tarefa.descricao}</span>
+                     <label>
+                        Status:
+                        <select
+                           value={tarefa.status}
+                           onChange={(e) =>
+                              atualizarStatus(tarefa.id, e.target.value)
+                           }
+                        >
+                           <option value="ABERTA">Aberta</option>
+                           <option value="EM_ANDAMENTO">Em andamento</option>
+                           <option value="FINALIZADA">Concluída</option>
+                        </select>
+                     </label>
+
+                     {/* 🔴 Botão de excluir */}
+                     <button
+                        onClick={() => excluirTarefa(tarefa.id)}
+                        style={{
+                           marginTop: "8px",
+                           padding: "6px 12px",
+                           backgroundColor: "#e74c3c",
+                           color: "#fff",
+                           border: "none",
+                           borderRadius: "4px",
+                           width: "100px",
+                           cursor: "pointer",
+                        }}
+                     >
+                        Excluir
+                     </button>
+                  </div>
+               </li>
+            ))}
+         </ul>
+      </div>
+   );
+}
+```
+
+---
+
+## 🧪 Testando no navegador
+
+1. Vá para `/tarefas`
+2. Digite uma palavra no campo de busca (ex: `estudar`)
+3. Ou escolha um status (ex: `CONCLUIDA`)
+4. Veja os resultados atualizarem automaticamente
+
+---
+
+## 🧼 Dicas para o futuro
+
+* Você pode colocar um botão "Limpar Filtros" que reseta `status` e `busca`.
+* Pode aplicar **debounce** na busca para não disparar a cada tecla (isso é opcional).
+
+---
+
+## ✅ Conclusão
+
+Agora você sabe:
+
+* Filtrar usando **query params**
+* Atualizar dados de forma dinâmica com React + Axios
+* Usar `useEffect` com dependências para reagir a mudanças de estado
+
+---
+
+Perfeito! Vamos com calma e clareza para o:
+
+---
+
+# 🗓️ **Dia 10 – Logout e controle de rotas protegidas**
+
+---
+
+## 🎯 **Objetivo da aula**
+
+1. Criar um botão de **Logout** que apaga o token do navegador.
+2. **Proteger páginas** que só podem ser acessadas com o usuário logado.
+
+---
+
+## 🧱 **Antes de começar**
+
+Você já tem:
+
+* O token JWT salvo no `localStorage` após o login.
+* Um roteador (`react-router-dom`) com páginas como `/login`, `/tarefas`, `/nova-tarefa`, etc.
+
+---
+
+## 📌 **1. Criando o botão de Logout**
+
+O botão pode ser adicionado no topo da sua página de tarefas (`TarefasPage.jsx`), ou em um componente de layout que esteja sempre visível.
+
+### ✅ Exemplo de código:
+
+```jsx
+// No topo do componente TarefasPage ou outro lugar visível
+<button
+  onClick={() => {
+    localStorage.removeItem('token'); // Remove o token
+    window.location.href = '/login'; // Redireciona para o login
+  }}
+  style={{
+    position: "absolute",
+    right: "20px",
+    top: "20px",
+    padding: "6px 12px",
+    backgroundColor: "#333",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer"
+  }}
+>
+  Logout
+</button>
+```
+
+---
+
+## 📌 **2. Criando proteção de rotas**
+
+Agora vamos proteger as rotas para que **apenas usuários logados** acessem páginas como:
+
+* `/tarefas`
+* `/nova-tarefa`
+* `/editar-tarefa/:id`
+
+Para isso, vamos criar um **componente de rota protegida**.
+
+---
+
+### ✅ Crie um novo arquivo:
+
+```bash
+src/components/PrivateRoute.jsx
+```
+
+### 🧩 Código do `PrivateRoute.jsx`:
+
+```jsx
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+
+export default function PrivateRoute({ children }) {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+```
+
+---
+
+## 📌 **3. Usando o `PrivateRoute` nas rotas**
+
+Agora abra o seu arquivo de rotas, provavelmente `App.js` ou `Routes.jsx`, e use o componente `PrivateRoute` nas rotas que precisam de proteção.
+
+### 🧩 Exemplo de como fica o App.js:
+
+```jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import LoginPage from './pages/LoginPage';
+import RegistroPage from './pages/RegistroPage';
+import TarefasPage from './pages/TarefasPage';
+import NovaTarefaPage from './pages/NovaTarefaPage';
+import PrivateRoute from './components/PrivateRoute';
+
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/registro" element={<RegistroPage />} />
+
+        {/* Rotas protegidas */}
+        <Route
+          path="/tarefas"
+          element={
+            <PrivateRoute>
+              <TarefasPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/nova-tarefa"
+          element={
+            <PrivateRoute>
+              <NovaTarefaPage />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </Router>
+  );
+}
+```
+
+---
+
+## ✅ **Resultado Esperado**
+
+* Se o usuário **estiver logado**, ele acessa as rotas normalmente.
+* Se **não estiver logado**, ele é **redirecionado para `/login`**.
+* O botão de Logout **remove o token e volta para o login**.
+
+---
+
+## 🧪 Teste agora!
+
+1. Acesse `/tarefas` com login → ✅ acesso permitido
+2. Clique no botão Logout → ❌ acesso negado, volta para login
+3. Tente acessar `/tarefas` diretamente sem login → ❌ bloqueado
+
+---
+
+## 🧼 Dica de ouro
+
+Você também pode proteger chamadas com Axios já que está usando o `api.js` com interceptor — e já fizemos isso no Dia 4.
+
+---
+
+## 🧠 O que você aprendeu
+
+* Como **remover o token** e fazer logout
+* Como **impedir acesso a páginas protegidas**
+* Como usar **React Router com navegação condicional**
+
+---
+
+🎓 **Próxima aula – Dia 11: Editar tarefa (PATCH /tarefas/\:id)**
+Quer que eu prepare o Dia 11 com a página de edição e formulário de atualização?
+
 

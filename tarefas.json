@@ -1,0 +1,60 @@
+Claro! Aqui estão mais 10 tarefas no formato JSON para você usar no Postman:
+
+```json
+[
+  {
+    "titulo": "Estudar NestJS",
+    "descricao": "Revisar conceitos de módulos, serviços e controladores",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Ler documentação do TypeORM",
+    "descricao": "Compreender relacionamentos entre entidades",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Praticar SQL",
+    "descricao": "Fazer consultas com JOIN e filtros por data",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Estudar DTOs no NestJS",
+    "descricao": "Criar e usar DTOs para entrada de dados",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Revisar autenticação JWT",
+    "descricao": "Validar token e proteger rotas com Guards",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Criar tela de login no frontend",
+    "descricao": "Conectar com API NestJS para autenticação",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Testar rotas com Postman",
+    "descricao": "Fazer testes de autenticação e CRUD",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Revisar Express",
+    "descricao": "Comparar estrutura Express x NestJS",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Organizar projeto em pastas",
+    "descricao": "Separar módulos por domínio (usuário, tarefas)",
+    "status": "ABERTA"
+  },
+  {
+    "titulo": "Estudar Pipes do NestJS",
+    "descricao": "Criar validações personalizadas",
+    "status": "ABERTA"
+  }
+]
+```
+
+Você pode colar cada item individualmente no corpo de uma requisição `POST /tarefas`, ou adaptar seu controller para aceitar um array de tarefas se quiser inserir todas de uma vez.
+
+Quer um exemplo de como fazer isso com um array e uma rota única?
