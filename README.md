@@ -69,6 +69,156 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
 
+---
+
+Como você já finalizou a **API de Tarefas com NestJS**, agora é o momento ideal para aprender a **consumir essa API** — ou seja, criar um **frontend** que se comunique com ela.
+
+---
+
+### 🧭 Objetivo do Plano
+
+Construir um **cliente frontend** simples (web ou mobile) que consuma sua API de Tarefas, com funcionalidades como login, registro, listagem de tarefas, criação, edição e exclusão, utilizando o **token JWT** para autenticação.
+
+Você pode implementar o frontend com:
+
+* **React.js (web)** – Recomendado se quiser rodar no navegador.
+* **React Native / Expo (mobile)** – Para criar um app nativo ou híbrido.
+* **Postman / Insomnia** – Para começar testando com ferramentas manuais.
+
+---
+
+# 🗂️ Plano de Aulas – Consumindo API de Tarefas
+
+---
+
+## 📘 Semana 1: Base com React.js + Comunicação com a API
+
+#### 🗓️ Dia 1 – Criando o projeto React + estrutura base
+
+* Instalar Node, npm, e criar o projeto com `create-react-app`.
+* Organizar as pastas: `/components`, `/services`, `/pages`.
+* Instalar axios e react-router-dom.
+* Criar rotas para Login, Registro, Listar tarefas e Criar tarefa.
+
+🛠️ **Comandos úteis**:
+
+```bash
+npx create-react-app frontend-tarefas
+cd frontend-tarefas
+npm install axios react-router-dom
+```
+
+---
+
+#### 🗓️ Dia 2 – Criar página de Registro e fazer POST /usuarios/registrar
+
+* Criar formulário de registro.
+* Fazer requisição `POST /usuarios/registrar` com axios.
+* Exibir mensagens de sucesso ou erro.
+
+---
+
+#### 🗓️ Dia 3 – Criar página de Login e salvar o token JWT
+
+* Criar formulário de login (POST /auth/login).
+* Ao fazer login com sucesso, armazenar o token no localStorage.
+* Redirecionar para página de tarefas.
+
+---
+
+#### 🗓️ Dia 4 – Criar serviço Axios com autenticação
+
+* Criar `axiosInstance.js` que injeta o token automaticamente.
+
+```ts
+// services/api.js
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:3000',
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+export default api;
+```
+
+---
+
+#### 🗓️ Dia 5 – Listar tarefas do usuário logado
+
+* Criar página `/tarefas`
+* Fazer GET `/tarefas` com token.
+* Mostrar tarefas em uma lista com título, status e botão de excluir.
+
+---
+
+## 📘 Semana 2: CRUD completo de tarefas + filtros
+
+---
+
+#### 🗓️ Dia 6 – Criar tarefa (POST /tarefas)
+
+* Formulário para adicionar nova tarefa (título e descrição).
+* Redirecionar para lista após criação.
+
+---
+
+#### 🗓️ Dia 7 – Excluir tarefa (DELETE /tarefas/\:id)
+
+* Adicionar botão de excluir.
+* Atualizar a lista após exclusão.
+
+---
+
+#### 🗓️ Dia 8 – Atualizar status (PATCH /tarefas/\:id/status)
+
+* Adicionar botão ou select para trocar status (ABERTA, EM\_ANDAMENTO, CONCLUIDA).
+* Atualizar no backend e recarregar lista.
+
+---
+
+#### 🗓️ Dia 9 – Filtro por status e busca
+
+* Adicionar barra de busca e filtro por status.
+* Fazer GET `/tarefas?status=ABERTA&busca=texto`
+
+---
+
+#### 🗓️ Dia 10 – Logout e controle de rotas protegidas
+
+* Criar botão de logout (remove o token do localStorage).
+* Proteger rotas (verifica se tem token antes de permitir acesso às páginas).
+
+---
+
+## 🧪 Extras (opcionais)
+
+* 🔐 Refresh Token (se quiser aumentar a segurança).
+* 🎨 Estilização com TailwindCSS, Bootstrap ou CSS puro.
+* 📱 Fazer versão em **React Native** usando Expo.
+
+---
+
+## 🎓 Resultado Final
+
+Ao final, você terá uma aplicação React (ou mobile) onde o usuário pode:
+
+* Registrar-se e logar
+* Ver apenas suas tarefas
+* Criar, editar, excluir e filtrar tarefas
+* Acessar a API com segurança usando JWT
+
+---
+
+Se quiser, posso te ajudar a começar com o **Dia 1**: criação do projeto React com estrutura base e rotas. Quer seguir por esse caminho?
+
+
+---
 
 # 📘 Semana 1: Base com React.js + Comunicação com a API
 
@@ -1612,10 +1762,6 @@ Agora você sabe:
 * Filtrar usando **query params**
 * Atualizar dados de forma dinâmica com React + Axios
 * Usar `useEffect` com dependências para reagir a mudanças de estado
-
----
-
-Perfeito! Vamos com calma e clareza para o:
 
 ---
 
